@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --brand: #2e6fa8;
+  --brand-hover: #255a8a;
+  --brand-secondary: #4f8dbe;
+  --brand-light: #eaf3fa;
+  --brand-pale: #f4f8fc;
+  --brand-navy: #0b223d;
+  --brand-deep: #102f4f;
+  --ink: #0f172a;
+  --muted: #5f7185;
+  --faint: #8a99a8;
+  --line: #dce5ed;
+  --surface: #f6f8fb;
+  --success: #168b5b;
+  --warning: #c78316;
+  --danger: #c94242;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  @apply bg-surface font-sans antialiased;
+  color: var(--ink);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01', 'tnum';
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+@layer components {
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1;
+    --tw-ring-color: rgb(46 111 168 / 0.3);
+  }
+
+  .input-control {
+    @apply h-11 w-full rounded-[10px] border border-line bg-white px-3 text-sm text-ink placeholder:text-faint transition duration-ui;
+    @apply hover:border-[#C5D3DF] focus:outline-none;
+  }
+
+  .input-control:focus {
+    border-color: #2e6fa8;
+    box-shadow: 0 0 0 2px rgb(46 111 168 / 0.2);
+  }
+
+  .input-control-sm {
+    @apply h-10 rounded-[10px];
+  }
+
+  .money {
+    @apply tabular-nums tracking-tight;
+  }
+
+  .nav-label {
+    @apply mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8AA0B5];
+  }
+
+  .table-head {
+    @apply bg-[#F8FAFC] text-[11px] font-semibold uppercase tracking-[0.08em] text-[#516274];
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-toast {
+  animation: toast-in 180ms ease-out;
+}
+
+.animate-modal {
+  animation: modal-in 180ms ease-out;
+}
+
+.auth-grid {
+  background-color: #0b223d;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #quotation-print-root,
+  #quotation-print-root * {
+    visibility: visible;
+  }
+
+  #quotation-print-root {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    background: #fff;
+    box-shadow: none !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a[href]::after {
+    content: none !important;
+  }
+}
