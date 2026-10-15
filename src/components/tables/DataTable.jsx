@@ -6,11 +6,13 @@ export function DataTable({
   columns,
   rows,
   rowKey = 'id',
-  pageSize = 8,
+  pageSize: defaultPageSize = 10,
   empty,
   mobileCard,
+  showPagination = true,
 }) {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(defaultPageSize);
   const [sort, setSort] = useState({ key: null, dir: 'asc' });
 
   const sorted = useMemo(() => {
@@ -58,11 +60,11 @@ export function DataTable({
             </tr>
           </thead>
           <tbody>
-            {paged.map((row) => (
+            {paged.map((row, idx) => (
               <tr key={row[rowKey]} className="border-t border-line transition duration-ui hover:bg-[#F8FBFE]">
                 {columns.map((col) => (
                   <td key={col.key} className={cn('h-16 px-3 py-3 align-middle', col.className)}>
-                    {col.render ? col.render(row) : row[col.key]}
+                    {col.render ? col.render(row, (page - 1) * pageSize + idx) : row[col.key]}
                   </td>
                 ))}
               </tr>
@@ -71,22 +73,37 @@ export function DataTable({
         </table>
       </div>
       <div className="space-y-3 md:hidden">
-        {paged.map((row) =>
+        {paged.map((row, idx) =>
           mobileCard ? (
-            <div key={row[rowKey]}>{mobileCard(row)}</div>
+            <div key={row[rowKey]}>{mobileCard(row, (page - 1) * pageSize + idx)}</div>
           ) : (
             <div key={row[rowKey]} className="rounded-[12px] border border-line bg-white p-3">
               {columns.map((col) => (
                 <div key={col.key} className="flex justify-between gap-3 py-1 text-sm">
                   <span className="text-muted">{col.header}</span>
-                  <span className="text-right font-medium text-ink">{col.render ? col.render(row) : row[col.key]}</span>
+                  <span className="text-right font-medium text-ink">
+                    {col.render ? col.render(row, (page - 1) * pageSize + idx) : row[col.key]}
+                  </span>
                 </div>
               ))}
             </div>
           )
         )}
       </div>
-      {rows.length === 0 ? empty : <Pagination page={page} pageSize={pageSize} total={rows.length} onPageChange={setPage} />}
+      {rows.length === 0
+        ? empty
+        : showPagination && (
+            <Pagination
+              page={page}
+              pageSize={pageSize}
+              total={rows.length}
+              onPageChange={setPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(1);
+              }}
+            />
+          )}
     </div>
   );
 }

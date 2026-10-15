@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { Card } from '../../components/cards/Card';
-import { quotationService } from '../../services/mock';
+import { quotationService } from '../../services/api';
 import { formatCurrency } from '../../utils/formatting';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 

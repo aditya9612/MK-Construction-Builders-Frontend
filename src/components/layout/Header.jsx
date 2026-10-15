@@ -1,4 +1,4 @@
-import { Bell, Menu, PanelLeftClose, PanelLeftOpen, Search } from 'lucide-react';
+import { Bell, Menu, PanelLeftClose, PanelLeftOpen, Search, User, Building2, LogOut } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUiStore } from '../../store/uiStore';
@@ -21,6 +21,8 @@ const CRUMBS = [
   { test: /^\/masters/, items: [{ label: 'Masters' }] },
   { test: /^\/reports/, items: [{ label: 'Reports' }] },
   { test: /^\/terms/, items: [{ label: 'Terms' }] },
+  { test: /^\/profile/, items: [{ label: 'Profile' }] },
+  { test: /^\/company/, items: [{ label: 'Company Settings' }] },
   { test: /^\/settings/, items: [{ label: 'Settings' }] },
   { test: /^\/users/, items: [{ label: 'Users' }] },
   { test: /^\/help/, items: [{ label: 'Help' }] },
@@ -36,7 +38,9 @@ export function Header() {
   const [menu, setMenu] = useState(false);
   const [notes, setNotes] = useState(false);
   const searchRef = useRef(null);
-  const session = storage.get(STORAGE_KEYS.session, { name: 'Mahesh Kumar', role: 'Admin' });
+  const [session, setSession] = useState(() =>
+    storage.get(STORAGE_KEYS.session, { name: 'User', role: 'Admin' })
+  );
   const notifications = storage.get(STORAGE_KEYS.notifications, []);
   const crumbs = useMemo(() => CRUMBS.find((c) => c.test.test(location.pathname))?.items || [{ label: 'App' }], [location.pathname]);
 
@@ -47,8 +51,15 @@ export function Header() {
         searchRef.current?.focus();
       }
     };
+    const updateSession = () => {
+      setSession(storage.get(STORAGE_KEYS.session, { name: 'User', role: 'Admin' }));
+    };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('storage', updateSession);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('storage', updateSession);
+    };
   }, []);
 
   return (
@@ -111,19 +122,40 @@ export function Header() {
             </span>
           </button>
           {menu ? (
-            <div className="absolute right-0 mt-2 w-48 rounded-lg border border-line bg-white p-1 shadow-pop">
-              <button type="button" className="w-full rounded-md px-3 py-2 text-left text-sm hover:bg-surface" onClick={() => navigate('/settings')}>
-                Profile & company
+            <div className="absolute right-0 mt-2 w-52 rounded-lg border border-line bg-white p-1.5 shadow-pop">
+              <button
+                type="button"
+                className="flex items-center gap-2.5 w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-surface transition-colors"
+                onClick={() => {
+                  setMenu(false);
+                  navigate('/profile');
+                }}
+              >
+                <User className="h-4 w-4 text-[#0284c7]" />
+                <span>My Profile</span>
               </button>
               <button
                 type="button"
-                className="w-full rounded-md px-3 py-2 text-left text-sm hover:bg-surface"
+                className="flex items-center gap-2.5 w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-surface transition-colors"
+                onClick={() => {
+                  setMenu(false);
+                  navigate('/company');
+                }}
+              >
+                <Building2 className="h-4 w-4 text-[#0284c7]" />
+                <span>Company Settings</span>
+              </button>
+              <div className="my-1 border-t border-line" />
+              <button
+                type="button"
+                className="flex items-center gap-2.5 w-full rounded-md px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 transition-colors"
                 onClick={() => {
                   storage.remove(STORAGE_KEYS.session);
                   window.location.assign('/login');
                 }}
               >
-                Logout
+                <LogOut className="h-4 w-4 text-rose-500" />
+                <span>Logout</span>
               </button>
             </div>
           ) : null}

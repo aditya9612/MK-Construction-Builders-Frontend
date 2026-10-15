@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { SectionCard } from '../../../components/cards/Card';
 import { Textarea, Input } from '../../../components/forms/Fields';
 import { Button } from '../../../components/common/Button';
-import { termsService, companyService } from '../../../services/mock';
+import { termsService, companyService } from '../../../services/api';
 import { QuotationDocument } from '../../../components/quotation/QuotationDocument';
 import { uid } from '../../../utils/formatting';
 

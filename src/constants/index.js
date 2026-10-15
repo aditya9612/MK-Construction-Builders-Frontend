@@ -20,6 +20,7 @@ export const STORAGE_KEYS = {
   wizardDraft: 'mk.wizardDraft',
   notifications: 'mk.notifications',
   seeded: 'mk.seeded',
+  rememberedEmail: 'mk.rememberedEmail',
 };
 
 export const QUOTATION_STATUSES = ['Draft', 'Sent', 'Approved', 'Rejected', 'Expired'];

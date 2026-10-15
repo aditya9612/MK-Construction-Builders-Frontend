@@ -18,5 +18,9 @@ export const useUiStore = create((set) => ({
 }));
 
 export function toast(message, type = 'success') {
-  useUiStore.getState().pushToast({ message, type });
+  if (typeof type === 'object' && type !== null) {
+    useUiStore.getState().pushToast({ message, ...type });
+  } else {
+    useUiStore.getState().pushToast({ message, type });
+  }
 }

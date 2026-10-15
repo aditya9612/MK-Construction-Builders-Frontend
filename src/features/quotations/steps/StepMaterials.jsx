@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { SectionCard } from '../../../components/cards/Card';
-import { materialService } from '../../../services/mock';
+import { materialService } from '../../../services/api';
 import { MATERIAL_CATEGORIES } from '../../../constants';
 import { Button } from '../../../components/common/Button';
 import { uid } from '../../../utils/formatting';

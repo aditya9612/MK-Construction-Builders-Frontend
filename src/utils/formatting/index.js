@@ -45,12 +45,13 @@ export function formatDateInput(value) {
 }
 
 export function initials(name = '') {
+  if (!name || typeof name !== 'string') return 'U';
   return name
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
-    .join('');
+    .join('') || 'U';
 }
 
 export function uid(prefix = 'id') {

@@ -23,6 +23,8 @@ import {
 import TermsPage from '../pages/settings/TermsPage';
 import ReportsPage from '../pages/reports/ReportsPage';
 import SettingsPage from '../pages/settings/SettingsPage';
+import CompanyPage from '../pages/settings/CompanyPage';
+import ProfilePage from '../pages/settings/ProfilePage';
 import UsersPage from '../pages/settings/UsersPage';
 import HelpPage from '../pages/settings/HelpPage';
 import LoginPage from '../pages/auth/LoginPage';
@@ -58,6 +60,8 @@ export const router = createBrowserRouter([
           { path: '/masters/painting', element: <PaintingMasterPage /> },
           { path: '/terms', element: <TermsPage /> },
           { path: '/reports', element: <ReportsPage /> },
+          { path: '/profile', element: <ProfilePage /> },
+          { path: '/company', element: <CompanyPage /> },
           { path: '/settings', element: <SettingsPage /> },
           { path: '/users', element: <UsersPage /> },
           { path: '/help', element: <HelpPage /> },

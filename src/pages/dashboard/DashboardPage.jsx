@@ -6,7 +6,7 @@ import { Button } from '../../components/common/Button';
 import { Card } from '../../components/cards/Card';
 import { DataTable } from '../../components/tables/DataTable';
 import { StatusBadge } from '../../components/common/Badge';
-import { quotationService } from '../../services/mock';
+import { quotationService } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatting';
 import { LoadingSkeleton } from '../../components/common/States';
 import {
