@@ -32,6 +32,43 @@ function formatRatePayload(payload = {}) {
   };
 }
 
+/**
+ * Build a RateUpdate body for PUT /api/v1/rates/{rate_id}.
+ * UI fields `item` and `status` map to `name` and `is_active`.
+ */
+function formatRateUpdatePayload(payload = {}) {
+  const name = (payload.name ?? payload.item)?.toString().trim();
+  const category = payload.category?.toString().trim();
+  const unit = payload.unit?.toString().trim();
+  const hasRate = payload.rate !== undefined && payload.rate !== null && payload.rate !== '';
+  const rate = hasRate ? Number(payload.rate) : undefined;
+  const description =
+    payload.description === undefined
+      ? undefined
+      : payload.description?.toString().trim() || null;
+
+  const body = {};
+  if (name) body.name = name;
+  if (category) body.category = category;
+  if (unit) body.unit = unit;
+  if (hasRate && Number.isFinite(rate)) body.rate = rate;
+  if (description !== undefined) body.description = description;
+  if (typeof payload.is_active === 'boolean') {
+    body.is_active = payload.is_active;
+  } else if (payload.status === 'Inactive') {
+    body.is_active = false;
+  } else if (payload.status === 'Active') {
+    body.is_active = true;
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'effective_from')) {
+    body.effective_from = payload.effective_from || null;
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'effective_to')) {
+    body.effective_to = payload.effective_to || null;
+  }
+  return body;
+}
+
 function normalizeRate(rate) {
   if (!rate || typeof rate !== 'object') return rate;
   return {
@@ -134,10 +171,18 @@ export const rateService = {
     return normalizeRate(resData?.data || resData);
   },
 
-  async update(id, patch) {
-    const response = await apiClient.put(`/api/v1/rates/${id}`, formatRatePayload(patch));
+  /**
+   * Update rate.
+   * Endpoint: PUT /api/v1/rates/{rate_id}
+   * Body: RateUpdate { name, category, unit, rate, description, is_active, effective_from, effective_to }
+   */
+  async update(rateId, patch) {
+    const response = await apiClient.put(
+      `/api/v1/rates/${rateId}`,
+      formatRateUpdatePayload(patch)
+    );
     const resData = response.data;
-    return normalizeRate(resData?.data || resData);
+    return normalizeRate(resData?.data ?? resData);
   },
 
   async delete(id) {
