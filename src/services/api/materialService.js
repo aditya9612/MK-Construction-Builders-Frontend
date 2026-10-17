@@ -133,10 +133,16 @@ export const materialService = {
     }
   },
 
-  async getById(id) {
-    const response = await apiClient.get(`/api/v1/materials/${id}`);
+  /**
+   * Get a single material by id.
+   * Endpoint: GET /api/v1/materials/{material_id}
+   * Response: { success, message, data: MaterialOut }
+   */
+  async getById(materialId) {
+    const response = await apiClient.get(`/api/v1/materials/${materialId}`);
     const resData = response.data;
-    return normalizeMaterial(resData?.data || resData);
+    const material = resData?.data ?? resData;
+    return normalizeMaterial(material);
   },
 
   /**
