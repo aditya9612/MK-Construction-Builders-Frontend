@@ -65,17 +65,69 @@ function normalizeMaterial(material) {
 }
 
 export const materialService = {
+  /**
+   * List materials with pagination and optional filters.
+   * Endpoint: GET /api/v1/materials
+   */
+  async list({
+    page = 1,
+    page_size = 20,
+    search = '',
+    category = '',
+    brand = '',
+    is_active = null,
+  } = {}) {
+    const params = {
+      page,
+      page_size: Math.min(Math.max(Number(page_size) || 20, 1), 100),
+    };
+    if (search && String(search).trim()) {
+      params.search = String(search).trim();
+    }
+    if (category && String(category).trim()) {
+      params.category = toApiCategory(String(category).trim());
+    }
+    if (brand && String(brand).trim()) {
+      params.brand = String(brand).trim();
+    }
+    if (is_active !== null && is_active !== undefined && is_active !== '') {
+      params.is_active = is_active;
+    }
+
+    const response = await apiClient.get('/api/v1/materials', { params });
+    const resData = response.data;
+    const data = resData?.data || resData;
+    const items = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.items)
+      ? data.items
+      : [];
+
+    return {
+      items: items.map(normalizeMaterial),
+      total: data?.total ?? items.length,
+      page: data?.page ?? page,
+      page_size: data?.page_size ?? params.page_size,
+      total_pages: data?.total_pages ?? 1,
+    };
+  },
+
+  /**
+   * Get all materials as an array for listing screens and quotation specs.
+   * Endpoint: GET /api/v1/materials
+   */
   async getAll() {
     try {
-      const response = await apiClient.get('/api/v1/materials');
-      const resData = response.data;
-      const data = resData?.data || resData;
-      const items = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.items)
-        ? data.items
-        : [];
-      return items.map(normalizeMaterial);
+      const first = await this.list({ page: 1, page_size: 100 });
+      const pages = first.total_pages || 1;
+      if (pages <= 1) return first.items;
+
+      const rest = await Promise.all(
+        Array.from({ length: pages - 1 }, (_, i) =>
+          this.list({ page: i + 2, page_size: 100 })
+        )
+      );
+      return first.items.concat(...rest.map((page) => page.items));
     } catch {
       return [];
     }
