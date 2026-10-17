@@ -185,8 +185,16 @@ export const rateService = {
     return normalizeRate(resData?.data ?? resData);
   },
 
-  async delete(id) {
-    const response = await apiClient.delete(`/api/v1/rates/${id}`);
+  /**
+   * Deactivate rate (soft delete).
+   * Endpoint: DELETE /api/v1/rates/{rate_id}
+   * Success: 204 No Content
+   */
+  async delete(rateId) {
+    const response = await apiClient.delete(`/api/v1/rates/${rateId}`);
+    if (response.status === 204 || response.data == null || response.data === '') {
+      return { success: true };
+    }
     return response.data;
   },
 };
