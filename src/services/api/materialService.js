@@ -3,18 +3,79 @@ import { apiClient } from './apiClient';
 /**
  * Material master service — hits the real backend API.
  * Endpoint base: /api/v1/materials
+ *
+ * UI keeps using labels like "RCC Materials" and `status`; those are mapped
+ * to Swagger `MaterialCategory` enums and `is_active`.
  */
+const CATEGORY_TO_API = {
+  'RCC Materials': 'RCC',
+  'Brick & Plaster Materials': 'BRICK_PLASTER',
+  'Granite & Tiles': 'GRANITE_TILES',
+  'Electrical Materials': 'ELECTRICAL',
+  'Plumbing Materials': 'PLUMBING',
+  'Doors & Frames': 'DOORS_FRAMES',
+  Sliding: 'SLIDING',
+  Painting: 'PAINTING',
+};
+
+const API_TO_CATEGORY = Object.fromEntries(
+  Object.entries(CATEGORY_TO_API).map(([label, value]) => [value, label])
+);
+
+function toApiCategory(category) {
+  if (!category) return category;
+  if (CATEGORY_TO_API[category]) return CATEGORY_TO_API[category];
+  const upper = String(category).trim().toUpperCase().replace(/[\s&-]+/g, '_');
+  return CATEGORY_TO_API[category] || upper;
+}
+
+function toUiCategory(category) {
+  if (!category) return category;
+  return API_TO_CATEGORY[category] || API_TO_CATEGORY[String(category).toUpperCase()] || category;
+}
+
+function toActiveFlag(payload) {
+  if (typeof payload?.is_active === 'boolean') return payload.is_active;
+  if (payload?.status === 'Inactive') return false;
+  return true;
+}
+
+/**
+ * Build a MaterialCreate body for POST /api/v1/materials.
+ */
+function formatMaterialCreatePayload(payload = {}) {
+  return {
+    name: (payload.name || '').toString().trim(),
+    category: toApiCategory(payload.category),
+    brand: payload.brand?.toString().trim() || null,
+    specification: payload.specification?.toString().trim() || null,
+    unit: (payload.unit || '').toString().trim(),
+    description: payload.description?.toString().trim() || null,
+    is_active: toActiveFlag(payload),
+  };
+}
+
+function normalizeMaterial(material) {
+  if (!material || typeof material !== 'object') return material;
+  return {
+    ...material,
+    category: toUiCategory(material.category),
+    status: material.status || (material.is_active === false ? 'Inactive' : 'Active'),
+  };
+}
+
 export const materialService = {
   async getAll() {
     try {
       const response = await apiClient.get('/api/v1/materials');
       const resData = response.data;
       const data = resData?.data || resData;
-      return Array.isArray(data)
+      const items = Array.isArray(data)
         ? data
         : Array.isArray(data?.items)
         ? data.items
         : [];
+      return items.map(normalizeMaterial);
     } catch {
       return [];
     }
@@ -23,19 +84,27 @@ export const materialService = {
   async getById(id) {
     const response = await apiClient.get(`/api/v1/materials/${id}`);
     const resData = response.data;
-    return resData?.data || resData;
+    return normalizeMaterial(resData?.data || resData);
   },
 
+  /**
+   * Create material.
+   * Endpoint: POST /api/v1/materials
+   * Body: MaterialCreate { name, category, brand, specification, unit, description, is_active }
+   */
   async create(payload) {
-    const response = await apiClient.post('/api/v1/materials', payload);
+    const response = await apiClient.post(
+      '/api/v1/materials',
+      formatMaterialCreatePayload(payload)
+    );
     const resData = response.data;
-    return resData?.data || resData;
+    return normalizeMaterial(resData?.data ?? resData);
   },
 
   async update(id, patch) {
     const response = await apiClient.put(`/api/v1/materials/${id}`, patch);
     const resData = response.data;
-    return resData?.data || resData;
+    return normalizeMaterial(resData?.data || resData);
   },
 
   async delete(id) {
