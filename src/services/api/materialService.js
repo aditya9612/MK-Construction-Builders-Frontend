@@ -55,6 +55,42 @@ function formatMaterialCreatePayload(payload = {}) {
   };
 }
 
+/**
+ * Build a MaterialUpdate body for PUT /api/v1/materials/{material_id}.
+ * UI fields `status` and category labels map to `is_active` and MaterialCategory.
+ */
+function formatMaterialUpdatePayload(payload = {}) {
+  const name = payload.name?.toString().trim();
+  const category = payload.category ? toApiCategory(payload.category) : undefined;
+  const unit = payload.unit?.toString().trim();
+  const brand =
+    payload.brand === undefined ? undefined : payload.brand?.toString().trim() || null;
+  const specification =
+    payload.specification === undefined
+      ? undefined
+      : payload.specification?.toString().trim() || null;
+  const description =
+    payload.description === undefined
+      ? undefined
+      : payload.description?.toString().trim() || null;
+
+  const body = {};
+  if (name) body.name = name;
+  if (category) body.category = category;
+  if (unit) body.unit = unit;
+  if (brand !== undefined) body.brand = brand;
+  if (specification !== undefined) body.specification = specification;
+  if (description !== undefined) body.description = description;
+  if (typeof payload.is_active === 'boolean') {
+    body.is_active = payload.is_active;
+  } else if (payload.status === 'Inactive') {
+    body.is_active = false;
+  } else if (payload.status === 'Active') {
+    body.is_active = true;
+  }
+  return body;
+}
+
 function normalizeMaterial(material) {
   if (!material || typeof material !== 'object') return material;
   return {
@@ -159,10 +195,18 @@ export const materialService = {
     return normalizeMaterial(resData?.data ?? resData);
   },
 
-  async update(id, patch) {
-    const response = await apiClient.put(`/api/v1/materials/${id}`, patch);
+  /**
+   * Update material.
+   * Endpoint: PUT /api/v1/materials/{material_id}
+   * Body: MaterialUpdate { name, category, brand, specification, unit, description, is_active }
+   */
+  async update(materialId, patch) {
+    const response = await apiClient.put(
+      `/api/v1/materials/${materialId}`,
+      formatMaterialUpdatePayload(patch)
+    );
     const resData = response.data;
-    return normalizeMaterial(resData?.data || resData);
+    return normalizeMaterial(resData?.data ?? resData);
   },
 
   async delete(id) {
