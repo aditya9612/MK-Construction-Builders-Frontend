@@ -209,8 +209,16 @@ export const materialService = {
     return normalizeMaterial(resData?.data ?? resData);
   },
 
-  async delete(id) {
-    const response = await apiClient.delete(`/api/v1/materials/${id}`);
+  /**
+   * Deactivate material (soft delete).
+   * Endpoint: DELETE /api/v1/materials/{material_id}
+   * Success: 204 No Content
+   */
+  async delete(materialId) {
+    const response = await apiClient.delete(`/api/v1/materials/${materialId}`);
+    if (response.status === 204 || response.data == null || response.data === '') {
+      return { success: true };
+    }
     return response.data;
   },
 };
