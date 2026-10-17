@@ -112,10 +112,16 @@ export const rateService = {
     }
   },
 
-  async getById(id) {
-    const response = await apiClient.get(`/api/v1/rates/${id}`);
+  /**
+   * Get a single rate by id.
+   * Endpoint: GET /api/v1/rates/{rate_id}
+   * Response: { success, message, data: RateOut }
+   */
+  async getById(rateId) {
+    const response = await apiClient.get(`/api/v1/rates/${rateId}`);
     const resData = response.data;
-    return normalizeRate(resData?.data || resData);
+    const rate = resData?.data ?? resData;
+    return normalizeRate(rate);
   },
 
   /**
