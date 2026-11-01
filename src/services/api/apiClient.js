@@ -5,11 +5,11 @@ const resolveBaseUrl = () => {
   if (envUrl !== undefined && envUrl !== '') {
     return envUrl;
   }
-  // In dev mode, use relative URL to leverage Vite proxy and avoid browser CORS preflight issues
+  // Use relative URLs so Vite (development) or Netlify (production) can proxy API requests.
   if (import.meta.env.DEV) {
     return '';
   }
-  return 'https://api.mkconstruction.site';
+  return '';
 };
 
 export const apiClient = axios.create({
@@ -88,9 +88,8 @@ apiClient.interceptors.response.use(
           throw new Error('No refresh token available');
         }
 
-        const baseURL = apiClient.defaults.baseURL || 'https://api.mkconstruction.site';
-        const refreshResponse = await axios.post(
-          `${baseURL.replace(/\/$/, '')}/api/v1/auth/refresh`,
+        const refreshResponse = await apiClient.post(
+          '/api/v1/auth/refresh',
           { refresh_token: refreshToken },
           { headers: { 'Content-Type': 'application/json' } }
         );
