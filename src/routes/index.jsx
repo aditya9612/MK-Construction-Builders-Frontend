@@ -27,6 +27,8 @@ import CompanyPage from '../pages/settings/CompanyPage';
 import ProfilePage from '../pages/settings/ProfilePage';
 import UsersPage from '../pages/settings/UsersPage';
 import HelpPage from '../pages/settings/HelpPage';
+import SiteGalleryPage from '../pages/site-data/SiteGalleryPage';
+import IncomingContactFormsPage from '../pages/site-data/IncomingContactFormsPage';
 import LoginPage from '../pages/auth/LoginPage';
 import NotFoundPage from '../pages/errors/NotFoundPage';
 
@@ -51,6 +53,8 @@ export const router = createBrowserRouter([
           { path: '/customers/:id', element: <CustomerDetailPage /> },
           { path: '/projects', element: <ProjectsPage /> },
           { path: '/projects/:id', element: <ProjectDetailPage /> },
+          { path: '/site-data/gallery', element: <SiteGalleryPage /> },
+          { path: '/site-data/contact-forms', element: <IncomingContactFormsPage /> },
           { path: '/masters/rates', element: <RatesPage /> },
           { path: '/masters/materials', element: <MaterialsPage /> },
           { path: '/masters/electrical', element: <ElectricalMasterPage /> },

@@ -19,6 +19,8 @@ import {
   User,
   HelpCircle,
   LogOut,
+  Images,
+  Inbox,
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
 import { cn } from '../../utils/formatting';
@@ -44,6 +46,13 @@ const GROUPS = [
     items: [
       { to: '/customers', label: 'Customers', icon: Users },
       { to: '/projects', label: 'Projects', icon: Building2 },
+    ],
+  },
+  {
+    label: 'Public Site Data',
+    items: [
+      { to: '/site-data/gallery', label: 'Gallery', icon: Images },
+      { to: '/site-data/contact-forms', label: 'Incoming Contact Forms', icon: Inbox },
     ],
   },
   {
