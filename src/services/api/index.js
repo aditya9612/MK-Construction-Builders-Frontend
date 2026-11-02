@@ -7,4 +7,5 @@ export { rateService } from './rateService';
 export { materialService } from './materialService';
 export { termsService } from './termsService';
 export { companyService } from './companyService';
+export { cmsUploadService, mediaUrl, MEDIA_FOLDERS } from './cmsUploadService';
 

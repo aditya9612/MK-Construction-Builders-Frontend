@@ -17,6 +17,8 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { Modal } from '../../components/modals/Modal';
 import { storage } from '../../utils/storage/localStorage';
 import { toast, useUiStore } from '../../store/uiStore';
+import { cmsUploadService } from '../../services/api/cmsUploadService';
+import { extractErrorMessage } from '../../services/api/authService';
 
 const STORAGE_KEY = 'mk_site_gallery_demo_v1';
 const DEMO_ITEMS = [
@@ -42,44 +44,6 @@ const DEMO_ITEMS = [
 
 const fieldClass = 'mt-1.5 h-10 w-full rounded-lg border border-line bg-white px-3 text-sm text-ink outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10';
 const textAreaClass = 'mt-1.5 w-full resize-y rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10';
-
-function readImage(file) {
-  return new Promise((resolve, reject) => {
-    const imageUrl = URL.createObjectURL(file);
-    const image = new window.Image();
-    image.onload = () => {
-      URL.revokeObjectURL(imageUrl);
-      const maxDimension = 1440;
-      const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.max(1, Math.round(image.width * scale));
-      canvas.height = Math.max(1, Math.round(image.height * scale));
-      const context = canvas.getContext('2d');
-      if (!context) {
-        reject(new Error('Could not process this image.'));
-        return;
-      }
-      context.fillStyle = '#ffffff';
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          reject(new Error('Could not process this image.'));
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ''));
-        reader.onerror = () => reject(new Error('Could not read this image.'));
-        reader.readAsDataURL(blob);
-      }, 'image/jpeg', 0.82);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(imageUrl);
-      reject(new Error('This image could not be opened.'));
-    };
-    image.src = imageUrl;
-  });
-}
 
 function formatAddedDate(value) {
   return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value));
@@ -141,19 +105,51 @@ export default function SiteGalleryPage() {
   }
 
   async function handleImageChange(event) {
-    const file = event.target.files?.[0];
+    const selected = Array.from(event.target.files || []);
     event.target.value = '';
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
+    const files = selected.filter((file) => file.type.startsWith('image/'));
+    if (!files.length) {
       toast('Choose an image file to upload.', 'error');
       return;
     }
     setSaving(true);
     try {
-      const image = await readImage(file);
-      setDraft((current) => ({ ...current, image }));
+      if (files.length === 1) {
+        const uploaded = await cmsUploadService.uploadImage(files[0], 'gallery');
+        setDraft((current) => ({
+          ...current,
+          image: uploaded.url || uploaded.url_path,
+          mediaId: uploaded.id,
+        }));
+        return;
+      }
+
+      const uploaded = await cmsUploadService.uploadImages(files, 'gallery');
+      const first = uploaded[0];
+      if (first) {
+        setDraft((current) => ({
+          ...current,
+          image: first.url || first.url_path,
+          mediaId: first.id,
+          title: current.title || first.original_filename || current.title,
+        }));
+      }
+      if (!editingId && uploaded.length > 1) {
+        const extraItems = uploaded.slice(1).map((media) => ({
+          id: media.id != null ? `media-${media.id}` : `gallery-${Date.now()}-${media.stored_filename}`,
+          title: media.original_filename || 'Gallery image',
+          description: '',
+          type: 'image',
+          image: media.url || media.url_path,
+          mediaId: media.id,
+          videoUrl: '',
+          createdAt: media.created_at || new Date().toISOString(),
+          demo: false,
+        }));
+        persist([...extraItems, ...items], `${uploaded.length} images uploaded.`);
+      }
     } catch (error) {
-      toast(error.message || 'Could not process this image.', 'error');
+      toast(extractErrorMessage(error, 'Could not upload these images.'), 'error');
     } finally {
       setSaving(false);
     }
@@ -444,12 +440,12 @@ export default function SiteGalleryPage() {
                 ) : (
                   <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-md bg-white px-4 py-5 text-center hover:bg-[#FBFDFF]">
                     <Upload className="h-5 w-5 text-brand" />
-                    <span className="text-[13px] font-medium text-ink">Choose an image to upload</span>
-                    <span className="text-xs text-faint">PNG, JPG, GIF, or WebP. Images are resized for the demo.</span>
-                    <input type="file" accept="image/*" className="sr-only" onChange={handleImageChange} />
+                    <span className="text-[13px] font-medium text-ink">Choose images to upload</span>
+                    <span className="text-xs text-faint">PNG, JPG, GIF, or WebP. Select one or more files.</span>
+                    <input type="file" accept="image/*" multiple className="sr-only" onChange={handleImageChange} />
                   </label>
                 )}
-                {saving ? <p className="mt-2 text-center text-xs text-muted">Preparing image…</p> : null}
+                {saving ? <p className="mt-2 text-center text-xs text-muted">Uploading…</p> : null}
               </div>
             </div>
           ) : (
