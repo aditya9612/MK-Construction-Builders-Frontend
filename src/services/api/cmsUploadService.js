@@ -81,4 +81,34 @@ export const cmsUploadService = {
     const items = Array.isArray(data) ? data : [];
     return items.map(normalizeUploadedMedia);
   },
+
+  /**
+   * Delete uploaded media by database media ID (never by filesystem path).
+   * Endpoint: DELETE /api/v1/admin/upload/{file_id}
+   * Success: 204 No Content (empty body — not JSON)
+   */
+  async deleteUpload(fileId) {
+    if (fileId == null || fileId === '') {
+      throw new Error('file_id is required');
+    }
+
+    try {
+      const response = await apiClient.delete(`/api/v1/admin/upload/${fileId}`, {
+        validateStatus: (status) => status === 204 || (status >= 200 && status < 300),
+        transformResponse: [(data) => (data == null || data === '' ? null : data)],
+      });
+      return { success: true, status: response.status || 204 };
+    } catch (error) {
+      // Some proxies/axios builds throw on an empty 204 body. The file is already deleted.
+      const status = error.response?.status;
+      if (status === 204 || status === 200) {
+        return { success: true, status };
+      }
+      const message = error.message || '';
+      if (!error.response && /unexpected end of json|json.parse/i.test(message)) {
+        return { success: true, status: 204 };
+      }
+      throw error;
+    }
+  },
 };

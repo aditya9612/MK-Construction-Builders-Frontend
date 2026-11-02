@@ -88,7 +88,7 @@ export default function SiteGalleryPage() {
 
   function openCreate() {
     setEditingId(null);
-    setDraft({ title: '', description: '', type: 'image', image: '', videoUrl: '' });
+    setDraft({ title: '', description: '', type: 'image', image: '', videoUrl: '', mediaId: null });
     setEditorOpen(true);
   }
 
@@ -100,6 +100,7 @@ export default function SiteGalleryPage() {
       type: item.type,
       image: item.image || '',
       videoUrl: item.videoUrl || '',
+      mediaId: item.mediaId ?? null,
     });
     setEditorOpen(true);
   }
@@ -181,11 +182,12 @@ export default function SiteGalleryPage() {
 
     const previous = items.find((item) => item.id === editingId);
     const nextItem = {
-      id: editingId || `gallery-${Date.now()}`,
+      id: editingId || (draft.mediaId != null ? `media-${draft.mediaId}` : `gallery-${Date.now()}`),
       title,
       description: draft.description.trim(),
       type: draft.type,
       image: draft.type === 'image' ? draft.image : '',
+      mediaId: draft.type === 'image' ? draft.mediaId ?? previous?.mediaId ?? null : null,
       videoUrl: draft.type === 'video' ? videoUrl : '',
       createdAt: previous?.createdAt || new Date().toISOString(),
       demo: false,
@@ -205,7 +207,18 @@ export default function SiteGalleryPage() {
       message: `“${item.title}” will be removed from this demo gallery.`,
       confirmLabel: 'Delete item',
       danger: true,
-      onConfirm: () => persist(items.filter((entry) => entry.id !== item.id), 'Gallery item deleted.'),
+      onConfirm: async () => {
+        const fileId = item.mediaId ?? (String(item.id).startsWith('media-') ? String(item.id).slice(6) : null);
+        if (fileId != null && fileId !== '') {
+          try {
+            await cmsUploadService.deleteUpload(fileId);
+          } catch (error) {
+            toast(extractErrorMessage(error, 'Could not delete this uploaded image.'), 'error');
+            return;
+          }
+        }
+        persist(items.filter((entry) => entry.id !== item.id), 'Gallery item deleted.');
+      },
     });
   }
 
@@ -429,7 +442,18 @@ export default function SiteGalleryPage() {
                     <img src={draft.image} alt="Gallery upload preview" className="max-h-52 w-full object-contain" />
                     <button
                       type="button"
-                      onClick={() => setDraft((current) => ({ ...current, image: '' }))}
+                      onClick={async () => {
+                        const fileId = draft.mediaId;
+                        if (fileId != null && fileId !== '') {
+                          try {
+                            await cmsUploadService.deleteUpload(fileId);
+                          } catch (error) {
+                            toast(extractErrorMessage(error, 'Could not delete this uploaded image.'), 'error');
+                            return;
+                          }
+                        }
+                        setDraft((current) => ({ ...current, image: '', mediaId: null }));
+                      }}
                       className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-md bg-white/95 text-muted shadow-sm hover:text-danger"
                       aria-label="Remove image"
                       title="Remove image"
