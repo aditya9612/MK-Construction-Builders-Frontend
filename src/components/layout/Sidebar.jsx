@@ -21,6 +21,7 @@ import {
   LogOut,
   Images,
   Inbox,
+  Briefcase,
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
 import { cn } from '../../utils/formatting';
@@ -52,6 +53,7 @@ const GROUPS = [
     label: 'Public Site Data',
     items: [
       { to: '/site-data/gallery', label: 'Gallery', icon: Images },
+      { to: '/site-data/portfolio', label: 'Portfolio', icon: Briefcase },
       { to: '/site-data/contact-forms', label: 'Incoming Contact Forms', icon: Inbox },
     ],
   },

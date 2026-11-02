@@ -8,4 +8,5 @@ export { materialService } from './materialService';
 export { termsService } from './termsService';
 export { companyService } from './companyService';
 export { cmsUploadService, mediaUrl, MEDIA_FOLDERS } from './cmsUploadService';
+export { portfolioService, PORTFOLIO_TYPES, PORTFOLIO_STATUSES } from './portfolioService';
 
