@@ -84,7 +84,7 @@ export function StepCustomerProject({ quotation, onPatch }) {
   };
 
   return (
-    <form className="space-y-5" onChange={handleSubmit(apply)} onBlur={handleSubmit(apply)}>
+    <form className="space-y-5" onSubmit={handleSubmit(apply)} onBlur={handleSubmit(apply)}>
       <SectionCard
         title="Customer information"
         icon={Users}
