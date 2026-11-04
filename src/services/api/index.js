@@ -8,5 +8,16 @@ export { materialService } from './materialService';
 export { termsService } from './termsService';
 export { companyService } from './companyService';
 export { cmsUploadService, mediaUrl, MEDIA_FOLDERS } from './cmsUploadService';
-export { portfolioService, PORTFOLIO_TYPES, PORTFOLIO_STATUSES } from './portfolioService';
+export {
+  portfolioService,
+  PORTFOLIO_TYPES,
+  PORTFOLIO_STATUSES,
+  PUBLICATION_STATUSES,
+  slugifyPortfolioName,
+} from './portfolioService';
+export {
+  galleryService,
+  GALLERY_CATEGORIES,
+  PUBLICATION_STATUSES as GALLERY_PUBLICATION_STATUSES,
+} from './galleryService';
 
