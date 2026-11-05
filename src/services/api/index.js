@@ -20,4 +20,9 @@ export {
   GALLERY_CATEGORIES,
   PUBLICATION_STATUSES as GALLERY_PUBLICATION_STATUSES,
 } from './galleryService';
+export {
+  cmsServiceService,
+  SERVICE_PUBLICATION_STATUSES,
+  slugifyServiceTitle,
+} from './cmsServiceService';
 

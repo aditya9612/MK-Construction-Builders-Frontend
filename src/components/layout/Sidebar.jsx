@@ -22,6 +22,7 @@ import {
   Images,
   Inbox,
   Briefcase,
+  Hammer,
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
 import { cn } from '../../utils/formatting';
@@ -54,6 +55,7 @@ const GROUPS = [
     items: [
       { to: '/site-data/gallery', label: 'Gallery', icon: Images },
       { to: '/site-data/portfolio', label: 'Portfolio', icon: Briefcase },
+      { to: '/site-data/services', label: 'Services', icon: Hammer },
       { to: '/site-data/contact-forms', label: 'Incoming Contact Forms', icon: Inbox },
     ],
   },
