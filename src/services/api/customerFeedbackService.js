@@ -38,6 +38,10 @@ export const FEATURED_FILTER_OPTIONS = [
   { value: 'false', label: 'Standard Only' },
 ];
 
+export const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+export const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+
 /**
  * Unwrap backend response data safely.
  */
@@ -61,6 +65,68 @@ export function normalizeCustomerFeedback(item) {
     is_published: Boolean(item.is_published),
     review_source: String(item.review_source || 'website').toLowerCase(),
   };
+}
+
+/**
+ * Parse structured backend error response.
+ * Handles FastAPI validation errors, Pydantic arrays, and custom error formats.
+ */
+export function parseValidationErrors(error) {
+  const res = error.response?.data;
+  const fieldErrors = {};
+
+  if (res?.errors && Array.isArray(res.errors)) {
+    res.errors.forEach((err) => {
+      if (err.field) {
+        fieldErrors[err.field] = err.message || 'Invalid field value';
+      }
+    });
+  } else if (res?.detail && Array.isArray(res.detail)) {
+    res.detail.forEach((err) => {
+      const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : err.loc;
+      if (field) {
+        fieldErrors[field] = err.msg || err.message || 'Invalid field value';
+      }
+    });
+  }
+
+  const generalMessage =
+    res?.message ||
+    (typeof res?.detail === 'string' ? res.detail : null) ||
+    error.message ||
+    'An error occurred. Please try again.';
+
+  return { fieldErrors, generalMessage };
+}
+
+/**
+ * Validate customer photo file before upload.
+ */
+export function validateCustomerPhotoFile(file) {
+  if (!file) return null;
+
+  const fileName = (file.name || '').toLowerCase();
+  const fileType = (file.type || '').toLowerCase();
+
+  // Explicitly reject SVG
+  if (fileType.includes('svg') || fileName.endsWith('.svg')) {
+    return 'SVG image files are not allowed. Please choose a JPG, PNG, or WEBP image.';
+  }
+
+  // Check extension and mime type
+  const hasValidExt = ALLOWED_IMAGE_EXTENSIONS.some((ext) => fileName.endsWith(ext));
+  const hasValidMime = ALLOWED_IMAGE_TYPES.includes(fileType);
+
+  if (!hasValidExt && !hasValidMime) {
+    return 'Unsupported image format. Allowed formats: JPG, JPEG, PNG, WEBP.';
+  }
+
+  if (file.size > MAX_PHOTO_SIZE_BYTES) {
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+    return `Image size (${sizeMb} MB) exceeds maximum allowed limit of 5 MB.`;
+  }
+
+  return null;
 }
 
 /**
@@ -179,6 +245,176 @@ export const customerFeedbackService = {
       throw new Error('Feedback ID is required');
     }
     const response = await apiClient.get(`/api/v1/customer-feedback/${feedbackId}`);
+    return normalizeCustomerFeedback(unwrapData(response));
+  },
+
+  /**
+   * Upload customer profile photo.
+   * Endpoint: POST /api/v1/customer-feedback/upload-photo
+   * Form field: file
+   * Allowed formats: JPG, JPEG, PNG, WEBP (SVG rejected). Max 5MB.
+   */
+  async uploadPhoto(file) {
+    if (!file) {
+      throw new Error('No file selected for upload.');
+    }
+
+    const validationErr = validateCustomerPhotoFile(file);
+    if (validationErr) {
+      throw new Error(validationErr);
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post('/api/v1/customer-feedback/upload-photo', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000,
+    });
+
+    const data = unwrapData(response);
+    return {
+      url_path: data?.url_path,
+      stored_filename: data?.stored_filename,
+      preview_url: mediaUrl(data?.url_path),
+    };
+  },
+
+  /**
+   * Attach customer profile photo directly to an existing feedback record.
+   * Endpoint: POST /api/v1/customer-feedback/{feedback_id}/photo
+   */
+  async attachPhoto(feedbackId, file) {
+    if (!feedbackId || !file) {
+      throw new Error('Feedback ID and file are required');
+    }
+
+    const validationErr = validateCustomerPhotoFile(file);
+    if (validationErr) {
+      throw new Error(validationErr);
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post(
+      `/api/v1/customer-feedback/${feedbackId}/photo`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 60000,
+      }
+    );
+
+    return normalizeCustomerFeedback(unwrapData(response));
+  },
+
+  /**
+   * Create new customer feedback.
+   * Endpoint: POST /api/v1/customer-feedback
+   * Content-Type: application/json or multipart/form-data
+   */
+  async createFeedback(payload) {
+    let response;
+
+    if (payload instanceof FormData) {
+      response = await apiClient.post('/api/v1/customer-feedback', payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    } else {
+      response = await apiClient.post('/api/v1/customer-feedback', payload);
+    }
+
+    return normalizeCustomerFeedback(unwrapData(response));
+  },
+
+  /**
+   * Update existing customer feedback (partial update).
+   * Endpoint: PUT /api/v1/customer-feedback/{feedback_id}
+   * Only send changed or explicitly targeted fields.
+   */
+  async updateFeedback(feedbackId, payload) {
+    if (!feedbackId) {
+      throw new Error('Feedback ID is required for update');
+    }
+
+    const response = await apiClient.put(`/api/v1/customer-feedback/${feedbackId}`, payload);
+    return normalizeCustomerFeedback(unwrapData(response));
+  },
+
+  /**
+   * Delete customer feedback.
+   * Endpoint: DELETE /api/v1/customer-feedback/{feedback_id}
+   * Success: HTTP 204 No Content
+   */
+  async deleteFeedback(feedbackId) {
+    if (!feedbackId) {
+      throw new Error('Feedback ID is required for deletion');
+    }
+
+    const response = await apiClient.delete(`/api/v1/customer-feedback/${feedbackId}`, {
+      validateStatus: (status) => status === 204 || (status >= 200 && status < 300),
+      transformResponse: [(data) => (data == null || data === '' ? null : data)],
+    });
+
+    return { success: true, status: response.status || 204 };
+  },
+
+  /**
+   * Publish or unpublish customer feedback.
+   * Endpoint: PATCH /api/v1/customer-feedback/{feedback_id}/publish
+   * Body: { is_published: boolean }
+   */
+  async publishFeedback(feedbackId, isPublished) {
+    if (!feedbackId) {
+      throw new Error('Feedback ID is required');
+    }
+
+    const response = await apiClient.patch(
+      `/api/v1/customer-feedback/${feedbackId}/publish`,
+      { is_published: Boolean(isPublished) }
+    );
+    return normalizeCustomerFeedback(unwrapData(response));
+  },
+
+  /**
+   * Feature or unfeature customer feedback.
+   * Endpoint: PATCH /api/v1/customer-feedback/{feedback_id}/featured
+   * Body: { is_featured: boolean }
+   */
+  async featureFeedback(feedbackId, isFeatured) {
+    if (!feedbackId) {
+      throw new Error('Feedback ID is required');
+    }
+
+    const response = await apiClient.patch(
+      `/api/v1/customer-feedback/${feedbackId}/featured`,
+      { is_featured: Boolean(isFeatured) }
+    );
+    return normalizeCustomerFeedback(unwrapData(response));
+  },
+
+  /**
+   * Update display sequence order.
+   * Endpoint: PATCH /api/v1/customer-feedback/{feedback_id}/display-order
+   * Body: { display_order: number }
+   */
+  async updateDisplayOrder(feedbackId, displayOrder) {
+    if (!feedbackId) {
+      throw new Error('Feedback ID is required');
+    }
+
+    const order = Math.max(0, parseInt(displayOrder, 10) || 0);
+    const response = await apiClient.patch(
+      `/api/v1/customer-feedback/${feedbackId}/display-order`,
+      { display_order: order }
+    );
     return normalizeCustomerFeedback(unwrapData(response));
   },
 };

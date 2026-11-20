@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   MessageSquare,
   RefreshCw,
+  Plus,
   AlertTriangle,
-  ShieldCheck,
 } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { Button } from '../../components/common/Button';
@@ -11,9 +11,10 @@ import { FeedbackStatsCards } from '../../features/customer-feedback/FeedbackSta
 import { FeedbackFilters } from '../../features/customer-feedback/FeedbackFilters';
 import { FeedbackTable } from '../../features/customer-feedback/FeedbackTable';
 import { FeedbackDetailDrawer } from '../../features/customer-feedback/FeedbackDetailDrawer';
+import { FeedbackFormModal } from '../../features/customer-feedback/FeedbackFormModal';
 import { customerFeedbackService } from '../../services/api/customerFeedbackService';
 import { extractErrorMessage } from '../../services/api/authService';
-import { toast } from '../../store/uiStore';
+import { toast, useUiStore } from '../../store/uiStore';
 
 export default function CustomerFeedbackPage() {
   // Statistics State
@@ -39,9 +40,17 @@ export default function CustomerFeedbackPage() {
   const [sortBy, setSortBy] = useState('display_order');
   const [sortOrder, setSortOrder] = useState('asc');
 
-  // Drawer / View Details State
+  // Modal & Drawer State
+  const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editingFeedback, setEditingFeedback] = useState(null);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // In-flight Action Loading State (per-item)
+  const [actionLoadingIds, setActionLoadingIds] = useState({});
+
+  // Confirmation dialog store action
+  const openConfirm = useUiStore((state) => state.openConfirm);
 
   // Load Statistics
   const loadStats = useCallback(async () => {
@@ -155,6 +164,19 @@ export default function CustomerFeedbackPage() {
     toast('Customer feedback data refreshed', 'info');
   };
 
+  // Open Add Modal
+  const handleAddNew = () => {
+    setEditingFeedback(null);
+    setFormModalOpen(true);
+  };
+
+  // Open Edit Modal
+  const handleEdit = (item) => {
+    setEditingFeedback(item);
+    setFormModalOpen(true);
+  };
+
+  // View Details Drawer
   const handleViewDetails = (item) => {
     setSelectedFeedback(item);
     setDrawerOpen(true);
@@ -163,6 +185,136 @@ export default function CustomerFeedbackPage() {
   const handleCloseDrawer = () => {
     setDrawerOpen(false);
     setSelectedFeedback(null);
+  };
+
+  // Delete Action with Confirmation Dialog
+  const handleDelete = (item) => {
+    if (!item?.id) return;
+
+    openConfirm({
+      title: 'Delete Customer Review',
+      message: `Are you sure you want to permanently delete the review from "${item.customer_name}"? This action cannot be undone.`,
+      danger: true,
+      confirmLabel: 'Delete Review',
+      cancelLabel: 'Cancel',
+      onConfirm: async () => {
+        setActionLoadingIds((prev) => ({ ...prev, [item.id]: true }));
+        try {
+          await customerFeedbackService.deleteFeedback(item.id);
+          toast('Customer feedback deleted successfully', 'success');
+          // Refresh list and stats
+          loadFeedbackList();
+          loadStats();
+          if (selectedFeedback?.id === item.id) {
+            handleCloseDrawer();
+          }
+        } catch (err) {
+          toast(extractErrorMessage(err, 'Failed to delete customer feedback.'), 'error');
+        } finally {
+          setActionLoadingIds((prev) => {
+            const copy = { ...prev };
+            delete copy[item.id];
+            return copy;
+          });
+        }
+      },
+    });
+  };
+
+  // Toggle Publication Status
+  const handleTogglePublish = async (item, shouldRefreshStats = true) => {
+    if (!item?.id) return;
+
+    const key = `${item.id}-publish`;
+    setActionLoadingIds((prev) => ({ ...prev, [key]: true }));
+
+    try {
+      const updated = await customerFeedbackService.publishFeedback(item.id, !item.is_published);
+      // Optimistically update list
+      setItems((prev) => prev.map((it) => (it.id === updated.id ? updated : it)));
+      if (selectedFeedback?.id === updated.id) {
+        setSelectedFeedback(updated);
+      }
+      toast(
+        `Feedback ${updated.is_published ? 'published' : 'unpublished'} successfully`,
+        'success'
+      );
+      if (shouldRefreshStats) {
+        loadStats();
+      }
+    } catch (err) {
+      toast(extractErrorMessage(err, 'Failed to update publication status.'), 'error');
+    } finally {
+      setActionLoadingIds((prev) => {
+        const copy = { ...prev };
+        delete copy[key];
+        return copy;
+      });
+    }
+  };
+
+  // Toggle Featured Status
+  const handleToggleFeatured = async (item, shouldRefreshStats = true) => {
+    if (!item?.id) return;
+
+    const key = `${item.id}-featured`;
+    setActionLoadingIds((prev) => ({ ...prev, [key]: true }));
+
+    try {
+      const updated = await customerFeedbackService.featureFeedback(item.id, !item.is_featured);
+      // Optimistically update list
+      setItems((prev) => prev.map((it) => (it.id === updated.id ? updated : it)));
+      if (selectedFeedback?.id === updated.id) {
+        setSelectedFeedback(updated);
+      }
+      toast(
+        `Feedback ${updated.is_featured ? 'marked as featured' : 'unmarked as featured'} successfully`,
+        'success'
+      );
+      if (shouldRefreshStats) {
+        loadStats();
+      }
+    } catch (err) {
+      toast(extractErrorMessage(err, 'Failed to update featured status.'), 'error');
+    } finally {
+      setActionLoadingIds((prev) => {
+        const copy = { ...prev };
+        delete copy[key];
+        return copy;
+      });
+    }
+  };
+
+  // Update Display Order
+  const handleUpdateDisplayOrder = async (item, newOrder) => {
+    if (!item?.id) return;
+
+    const key = `${item.id}-order`;
+    setActionLoadingIds((prev) => ({ ...prev, [key]: true }));
+
+    try {
+      const updated = await customerFeedbackService.updateDisplayOrder(item.id, newOrder);
+      setItems((prev) => prev.map((it) => (it.id === updated.id ? updated : it)));
+      if (selectedFeedback?.id === updated.id) {
+        setSelectedFeedback(updated);
+      }
+      toast(`Display order updated to #${updated.display_order}`, 'success');
+      loadFeedbackList(); // Re-sort according to backend order
+    } catch (err) {
+      toast(extractErrorMessage(err, 'Failed to update display order.'), 'error');
+    } finally {
+      setActionLoadingIds((prev) => {
+        const copy = { ...prev };
+        delete copy[key];
+        return copy;
+      });
+    }
+  };
+
+  // Handle Form Submission Success
+  const handleFormSuccess = () => {
+    loadFeedbackList();
+    loadStats();
   };
 
   const hasActiveFilters = Boolean(
@@ -181,7 +333,7 @@ export default function CustomerFeedbackPage() {
       <PageHeader
         eyebrow="Public Site Data"
         title="Customer Feedback"
-        description="Monitor ratings, verify Google & website reviews, and inspect customer satisfaction metrics across MK Construction & Builders projects."
+        description="Manage client ratings, verify Google reviews, publish customer testimonials, and update showcase rankings for the MK Construction & Builders website."
         actions={
           <div className="flex items-center gap-2">
             <Button
@@ -195,6 +347,15 @@ export default function CustomerFeedbackPage() {
                 className={`h-3.5 w-3.5 ${statsLoading || tableLoading ? 'animate-spin text-brand' : ''}`}
               />
               <span>Refresh</span>
+            </Button>
+
+            <Button
+              type="button"
+              onClick={handleAddNew}
+              className="inline-flex items-center gap-1.5 h-10 px-4 text-xs font-semibold shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Feedback</span>
             </Button>
           </div>
         }
@@ -259,12 +420,30 @@ export default function CustomerFeedbackPage() {
               setPageSize(newSize);
               setPage(1);
             }}
+            onAddNew={handleAddNew}
             onViewDetails={handleViewDetails}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onTogglePublish={handleTogglePublish}
+            onToggleFeatured={handleToggleFeatured}
+            onUpdateDisplayOrder={handleUpdateDisplayOrder}
             onClearFilters={handleClearFilters}
             hasActiveFilters={hasActiveFilters}
+            actionLoadingIds={actionLoadingIds}
           />
         )}
       </section>
+
+      {/* Add / Edit Feedback Modal */}
+      <FeedbackFormModal
+        open={formModalOpen}
+        onClose={() => {
+          setFormModalOpen(false);
+          setEditingFeedback(null);
+        }}
+        onSuccess={handleFormSuccess}
+        initialData={editingFeedback}
+      />
 
       {/* Review Details Slide-over Drawer */}
       <FeedbackDetailDrawer
@@ -272,6 +451,10 @@ export default function CustomerFeedbackPage() {
         initialData={selectedFeedback}
         open={drawerOpen}
         onClose={handleCloseDrawer}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onTogglePublish={handleTogglePublish}
+        onToggleFeatured={handleToggleFeatured}
       />
     </div>
   );

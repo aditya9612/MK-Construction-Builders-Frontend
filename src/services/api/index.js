@@ -28,10 +28,15 @@ export {
 export {
   customerFeedbackService,
   normalizeCustomerFeedback,
+  parseValidationErrors,
+  validateCustomerPhotoFile,
   REVIEW_SOURCES,
   ALLOWED_FEEDBACK_SORT_FIELDS,
   RATING_FILTER_OPTIONS,
   PUBLICATION_FILTER_OPTIONS,
   FEATURED_FILTER_OPTIONS,
+  MAX_PHOTO_SIZE_BYTES,
+  ALLOWED_IMAGE_TYPES,
+  ALLOWED_IMAGE_EXTENSIONS,
 } from './customerFeedbackService';
 
