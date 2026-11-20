@@ -31,6 +31,8 @@ import SiteGalleryPage from '../pages/site-data/SiteGalleryPage';
 import SitePortfolioPage from '../pages/site-data/SitePortfolioPage';
 import SiteServicesPage from '../pages/site-data/SiteServicesPage';
 import IncomingContactFormsPage from '../pages/site-data/IncomingContactFormsPage';
+import CustomerFeedbackPage from '../pages/customer-feedback/CustomerFeedbackPage';
+import { RequireAdmin } from './RequireAdmin';
 import LoginPage from '../pages/auth/LoginPage';
 import NotFoundPage from '../pages/errors/NotFoundPage';
 
@@ -59,6 +61,12 @@ export const router = createBrowserRouter([
           { path: '/site-data/portfolio', element: <SitePortfolioPage /> },
           { path: '/site-data/services', element: <SiteServicesPage /> },
           { path: '/site-data/contact-forms', element: <IncomingContactFormsPage /> },
+          {
+            element: <RequireAdmin />,
+            children: [
+              { path: '/admin/customer-feedback', element: <CustomerFeedbackPage /> },
+            ],
+          },
           { path: '/masters/rates', element: <RatesPage /> },
           { path: '/masters/materials', element: <MaterialsPage /> },
           { path: '/masters/electrical', element: <ElectricalMasterPage /> },

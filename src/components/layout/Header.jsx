@@ -18,6 +18,7 @@ const CRUMBS = [
   { test: /^\/customers/, items: [{ label: 'Customers' }] },
   { test: /^\/projects\/.+/, items: [{ label: 'Projects', to: '/projects' }, { label: 'Details' }] },
   { test: /^\/projects/, items: [{ label: 'Projects' }] },
+  { test: /^\/admin\/customer-feedback/, items: [{ label: 'Customer Feedback' }] },
   { test: /^\/masters/, items: [{ label: 'Masters' }] },
   { test: /^\/reports/, items: [{ label: 'Reports' }] },
   { test: /^\/terms/, items: [{ label: 'Terms' }] },

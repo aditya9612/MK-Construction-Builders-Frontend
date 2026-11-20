@@ -25,4 +25,13 @@ export {
   SERVICE_PUBLICATION_STATUSES,
   slugifyServiceTitle,
 } from './cmsServiceService';
+export {
+  customerFeedbackService,
+  normalizeCustomerFeedback,
+  REVIEW_SOURCES,
+  ALLOWED_FEEDBACK_SORT_FIELDS,
+  RATING_FILTER_OPTIONS,
+  PUBLICATION_FILTER_OPTIONS,
+  FEATURED_FILTER_OPTIONS,
+} from './customerFeedbackService';
 
