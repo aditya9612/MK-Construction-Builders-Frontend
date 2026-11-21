@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, PenLine, BadgeCheck, IndianRupee } from 'lucide-react';
+import { Plus, FileText, PenLine, BadgeCheck, IndianRupee, Inbox } from 'lucide-react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { Button } from '../../components/common/Button';
 import { Card } from '../../components/cards/Card';
@@ -24,6 +24,7 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { QuotationRowActions } from '../../features/quotations/QuotationRowActions';
+import { useEnquiryStore } from '../../store/enquiryStore';
 
 const STATUS_COLORS = {
   Draft: '#8A99A8',
@@ -41,6 +42,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const unreadEnquiries = useEnquiryStore((state) => state.unreadCount);
 
   const load = () => {
     setLoading(true);
@@ -93,6 +95,19 @@ export default function DashboardPage() {
         description="Construction quotation overview"
         actions={<Button onClick={() => navigate('/quotations/new')}><Plus className="h-4 w-4" /> New Quotation</Button>}
       />
+      {unreadEnquiries > 0 ? (
+        <button
+          type="button"
+          onClick={() => navigate('/site-data/enquiries')}
+          className="mb-4 flex w-full items-center justify-between gap-3 rounded-[12px] border border-sky-200 bg-sky-50 px-4 py-3 text-left transition hover:bg-sky-100"
+        >
+          <span className="flex items-center gap-2 text-sm font-medium text-sky-900">
+            <Inbox className="h-4 w-4" />
+            {unreadEnquiries} unread website {unreadEnquiries === 1 ? 'enquiry' : 'enquiries'}
+          </span>
+          <span className="text-xs font-medium text-sky-700">View enquiries</span>
+        </button>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi icon={FileText} label="Total quotations" value={stats.total} trend="+12%" note="vs last quarter" />
         <Kpi icon={PenLine} label="Drafts" value={stats.drafts} trend="Needs review" note="Save before sending" />

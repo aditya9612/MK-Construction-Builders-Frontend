@@ -39,4 +39,5 @@ export {
   ALLOWED_IMAGE_TYPES,
   ALLOWED_IMAGE_EXTENSIONS,
 } from './customerFeedbackService';
+export { enquiryService, ENQUIRY_STATUSES } from './enquiryService';
 

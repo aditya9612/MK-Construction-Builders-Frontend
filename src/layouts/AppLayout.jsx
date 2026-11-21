@@ -2,12 +2,14 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/layout/Sidebar';
 import { Header } from '../components/layout/Header';
 import { useUiStore } from '../store/uiStore';
+import { useEnquiryUnreadPoll } from '../hooks/useEnquiryUnreadPoll';
 import { cn } from '../utils/formatting';
 
 export function AppLayout() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const mobileNavOpen = useUiStore((s) => s.mobileNavOpen);
   const setMobileNavOpen = useUiStore((s) => s.setMobileNavOpen);
+  useEnquiryUnreadPoll();
 
   return (
     <div className="min-h-screen bg-surface">

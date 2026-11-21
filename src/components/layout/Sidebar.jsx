@@ -28,6 +28,7 @@ import {
 import { BrandLogo } from '../common/BrandLogo';
 import { cn } from '../../utils/formatting';
 import { useUiStore } from '../../store/uiStore';
+import { useEnquiryStore } from '../../store/enquiryStore';
 import { storage } from '../../utils/storage/localStorage';
 import { STORAGE_KEYS } from '../../constants';
 
@@ -57,7 +58,7 @@ const GROUPS = [
       { to: '/site-data/gallery', label: 'Gallery', icon: Images },
       { to: '/site-data/portfolio', label: 'Portfolio', icon: Briefcase },
       { to: '/site-data/services', label: 'Services', icon: Hammer },
-      { to: '/site-data/contact-forms', label: 'Incoming Contact Forms', icon: Inbox },
+      { to: '/site-data/enquiries', label: 'Enquiries', icon: Inbox, badgeKey: 'enquiries' },
       { to: '/admin/customer-feedback', label: 'Customer Feedback', icon: Star },
     ],
   },
@@ -91,13 +92,16 @@ const GROUPS = [
   },
 ];
 
-function Item({ to, label, icon: Icon, collapsed, onClick, end }) {
+function Item({ to, label, icon: Icon, collapsed, onClick, end, badge }) {
+  const showBadge = Number(badge) > 0;
+  const badgeLabel = Number(badge) > 99 ? '99+' : String(badge);
+
   return (
     <NavLink
       to={to}
       onClick={onClick}
       end={end}
-      title={collapsed ? label : undefined}
+      title={collapsed ? (showBadge ? `${label} (${badgeLabel})` : label) : undefined}
       className={({ isActive }) =>
         cn(
           'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition duration-ui',
@@ -119,7 +123,23 @@ function Item({ to, label, icon: Icon, collapsed, onClick, end }) {
               isActive ? 'text-[#38bdf8]' : 'text-white/50 group-hover:text-white/80'
             )}
           />
-          {collapsed ? <span className="sr-only">{label}</span> : <span className="truncate">{label}</span>}
+          {collapsed ? (
+            <>
+              <span className="sr-only">{label}</span>
+              {showBadge ? (
+                <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-rose-500" />
+              ) : null}
+            </>
+          ) : (
+            <>
+              <span className="min-w-0 flex-1 truncate">{label}</span>
+              {showBadge ? (
+                <span className="min-w-[18px] rounded-full bg-rose-500 px-1.5 text-center text-[10px] font-semibold leading-[18px] text-white">
+                  {badgeLabel}
+                </span>
+              ) : null}
+            </>
+          )}
         </>
       )}
     </NavLink>
@@ -129,6 +149,7 @@ function Item({ to, label, icon: Icon, collapsed, onClick, end }) {
 export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const setMobileNavOpen = useUiStore((s) => s.setMobileNavOpen);
+  const unreadEnquiries = useEnquiryStore((s) => s.unreadCount);
   const closeMobile = () => setMobileNavOpen(false);
 
   return (
@@ -168,7 +189,13 @@ export function Sidebar() {
             )}
             <div className="space-y-0.5">
               {group.items.map((item) => (
-                <Item key={item.to} {...item} collapsed={collapsed} onClick={closeMobile} />
+                <Item
+                  key={item.to}
+                  {...item}
+                  badge={item.badgeKey === 'enquiries' ? unreadEnquiries : undefined}
+                  collapsed={collapsed}
+                  onClick={closeMobile}
+                />
               ))}
             </div>
           </div>

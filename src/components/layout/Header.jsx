@@ -2,6 +2,7 @@ import { Bell, Menu, PanelLeftClose, PanelLeftOpen, Search, User, Building2, Log
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUiStore } from '../../store/uiStore';
+import { useEnquiryStore } from '../../store/enquiryStore';
 import { Breadcrumb } from '../common/PageHeader';
 import { BrandLogo } from '../common/BrandLogo';
 import { initials } from '../../utils/formatting';
@@ -19,6 +20,8 @@ const CRUMBS = [
   { test: /^\/projects\/.+/, items: [{ label: 'Projects', to: '/projects' }, { label: 'Details' }] },
   { test: /^\/projects/, items: [{ label: 'Projects' }] },
   { test: /^\/admin\/customer-feedback/, items: [{ label: 'Customer Feedback' }] },
+  { test: /^\/site-data\/enquiries/, items: [{ label: 'Public Site Data' }, { label: 'Enquiries' }] },
+  { test: /^\/site-data/, items: [{ label: 'Public Site Data' }] },
   { test: /^\/masters/, items: [{ label: 'Masters' }] },
   { test: /^\/reports/, items: [{ label: 'Reports' }] },
   { test: /^\/terms/, items: [{ label: 'Terms' }] },
@@ -43,6 +46,7 @@ export function Header() {
     storage.get(STORAGE_KEYS.session, { name: 'User', role: 'Admin' })
   );
   const notifications = storage.get(STORAGE_KEYS.notifications, []);
+  const unreadEnquiries = useEnquiryStore((s) => s.unreadCount);
   const crumbs = useMemo(() => CRUMBS.find((c) => c.test.test(location.pathname))?.items || [{ label: 'App' }], [location.pathname]);
 
   useEffect(() => {
@@ -98,13 +102,48 @@ export function Header() {
       </form>
       <div className="ml-auto flex items-center gap-1">
         <div className="relative">
-          <button type="button" className="relative rounded-md p-2 text-muted transition duration-ui hover:bg-surface hover:text-ink" aria-label="Notifications" onClick={() => { setNotes((v) => !v); setMenu(false); }}>
+          <button
+            type="button"
+            className="relative rounded-md p-2 text-muted transition duration-ui hover:bg-surface hover:text-ink"
+            aria-label="Notifications"
+            onClick={() => {
+              if (unreadEnquiries > 0) {
+                navigate('/site-data/enquiries');
+                setNotes(false);
+                setMenu(false);
+                return;
+              }
+              setNotes((v) => !v);
+              setMenu(false);
+            }}
+          >
             <Bell className="h-4 w-4" />
-            {notifications.some((n) => !n.read) ? <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-danger" /> : null}
+            {unreadEnquiries > 0 ? (
+              <span className="absolute right-0.5 top-0.5 min-w-[16px] rounded-full bg-danger px-1 text-center text-[9px] font-semibold leading-[16px] text-white">
+                {unreadEnquiries > 99 ? '99+' : unreadEnquiries}
+              </span>
+            ) : notifications.some((n) => !n.read) ? (
+              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-danger" />
+            ) : null}
           </button>
           {notes ? (
             <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-lg border border-line bg-white p-1 shadow-pop">
               <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-faint">Notifications</p>
+              {unreadEnquiries > 0 ? (
+                <button
+                  type="button"
+                  className="w-full rounded-md px-3 py-2 text-left text-sm hover:bg-surface"
+                  onClick={() => {
+                    setNotes(false);
+                    navigate('/site-data/enquiries');
+                  }}
+                >
+                  <p className="font-medium text-ink">Website enquiries</p>
+                  <p className="text-xs text-muted">
+                    {unreadEnquiries} unread {unreadEnquiries === 1 ? 'message' : 'messages'}
+                  </p>
+                </button>
+              ) : null}
               {notifications.map((n) => (
                 <div key={n.id} className="rounded-md px-3 py-2 text-sm hover:bg-surface">
                   <p className="font-medium text-ink">{n.title}</p>

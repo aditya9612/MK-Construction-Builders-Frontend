@@ -30,7 +30,7 @@ import HelpPage from '../pages/settings/HelpPage';
 import SiteGalleryPage from '../pages/site-data/SiteGalleryPage';
 import SitePortfolioPage from '../pages/site-data/SitePortfolioPage';
 import SiteServicesPage from '../pages/site-data/SiteServicesPage';
-import IncomingContactFormsPage from '../pages/site-data/IncomingContactFormsPage';
+import SiteEnquiriesPage from '../pages/site-data/SiteEnquiriesPage';
 import CustomerFeedbackPage from '../pages/customer-feedback/CustomerFeedbackPage';
 import { RequireAdmin } from './RequireAdmin';
 import LoginPage from '../pages/auth/LoginPage';
@@ -60,7 +60,9 @@ export const router = createBrowserRouter([
           { path: '/site-data/gallery', element: <SiteGalleryPage /> },
           { path: '/site-data/portfolio', element: <SitePortfolioPage /> },
           { path: '/site-data/services', element: <SiteServicesPage /> },
-          { path: '/site-data/contact-forms', element: <IncomingContactFormsPage /> },
+          { path: '/enquiries', element: <Navigate to="/site-data/enquiries" replace /> },
+          { path: '/site-data/enquiries', element: <SiteEnquiriesPage /> },
+          { path: '/site-data/contact-forms', element: <Navigate to="/site-data/enquiries" replace /> },
           {
             element: <RequireAdmin />,
             children: [
