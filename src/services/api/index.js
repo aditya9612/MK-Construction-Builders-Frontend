@@ -39,5 +39,16 @@ export {
   ALLOWED_IMAGE_TYPES,
   ALLOWED_IMAGE_EXTENSIONS,
 } from './customerFeedbackService';
+export {
+  instagramReelsService,
+  normalizeInstagramReel,
+  normalizeInstagramSectionSettings,
+  parseAndNormalizeInstagramUrl,
+  parseInstagramValidationErrors,
+  extractInstagramShortcode,
+  ALLOWED_INSTAGRAM_DOMAINS,
+  ALLOWED_REEL_SORT_FIELDS,
+  REEL_PUBLICATION_FILTER_OPTIONS,
+} from './instagramReelsService';
 export { enquiryService, ENQUIRY_STATUSES } from './enquiryService';
 

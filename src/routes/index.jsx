@@ -32,6 +32,7 @@ import SitePortfolioPage from '../pages/site-data/SitePortfolioPage';
 import SiteServicesPage from '../pages/site-data/SiteServicesPage';
 import SiteEnquiriesPage from '../pages/site-data/SiteEnquiriesPage';
 import CustomerFeedbackPage from '../pages/customer-feedback/CustomerFeedbackPage';
+import InstagramReelsPage from '../pages/instagram-reels/InstagramReelsPage';
 import { RequireAdmin } from './RequireAdmin';
 import LoginPage from '../pages/auth/LoginPage';
 import NotFoundPage from '../pages/errors/NotFoundPage';
@@ -67,6 +68,7 @@ export const router = createBrowserRouter([
             element: <RequireAdmin />,
             children: [
               { path: '/admin/customer-feedback', element: <CustomerFeedbackPage /> },
+              { path: '/admin/instagram-reels', element: <InstagramReelsPage /> },
             ],
           },
           { path: '/masters/rates', element: <RatesPage /> },

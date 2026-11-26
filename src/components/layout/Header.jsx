@@ -20,6 +20,7 @@ const CRUMBS = [
   { test: /^\/projects\/.+/, items: [{ label: 'Projects', to: '/projects' }, { label: 'Details' }] },
   { test: /^\/projects/, items: [{ label: 'Projects' }] },
   { test: /^\/admin\/customer-feedback/, items: [{ label: 'Customer Feedback' }] },
+  { test: /^\/admin\/instagram-reels/, items: [{ label: 'Public Site Data' }, { label: 'Instagram Reels' }] },
   { test: /^\/site-data\/enquiries/, items: [{ label: 'Public Site Data' }, { label: 'Enquiries' }] },
   { test: /^\/site-data/, items: [{ label: 'Public Site Data' }] },
   { test: /^\/masters/, items: [{ label: 'Masters' }] },

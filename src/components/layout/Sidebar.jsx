@@ -24,6 +24,7 @@ import {
   Briefcase,
   Hammer,
   Star,
+  Film,
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
 import { cn } from '../../utils/formatting';
@@ -60,6 +61,7 @@ const GROUPS = [
       { to: '/site-data/services', label: 'Services', icon: Hammer },
       { to: '/site-data/enquiries', label: 'Enquiries', icon: Inbox, badgeKey: 'enquiries' },
       { to: '/admin/customer-feedback', label: 'Customer Feedback', icon: Star },
+      { to: '/admin/instagram-reels', label: 'Instagram Reels', icon: Film },
     ],
   },
   {
